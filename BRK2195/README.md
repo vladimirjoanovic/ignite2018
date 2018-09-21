@@ -1,0 +1,1 @@
+# Demos from Microsoft Ignite Breakout Session BRK2195 Make production deployments safe and repeatable using declarative infrastructure and Azure Resource Manager

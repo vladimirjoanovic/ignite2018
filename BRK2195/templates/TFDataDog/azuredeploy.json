@@ -1,0 +1,274 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmHostName": {
+      "type": "string",
+      "defaultValue": "[concat('tf',uniquestring(deployment().name))]",
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "azureuser",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "dnsLabelPrefix": {
+      "type": "string",
+      "defaultValue": "[concat('tf',uniquestring(deployment().name))]",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+      }
+    },
+    "api-key": {
+      "type": "securestring",
+      "metadata": {
+        "description": "API Key for Datadog"
+      }
+    },
+    "app-key": {
+      "type": "securestring",
+      "metadata": {
+        "description": "AppKey for Datadog"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    }
+  },
+  "variables": {
+    "storageAccountName": "[concat('tfsa',uniquestring(deployment().name))]",
+    "nicName": "[concat('tfsa',uniquestring(deployment().name),'-Nic')]",
+    "publicIPAddressName": "[concat('tfsa',uniquestring(deployment().name),'-pip')]",
+    "vmName": "[parameters('vmHostName')]",
+    "virtualNetworkName": "[concat('tfsa',uniquestring(deployment().name),'-VNet')]",
+    "subnetName": "Subnet",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-11-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-11-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-11-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-12-01",
+      "name": "[variables('vmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_A2"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2016-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "diskSizeGB": 1023,
+              "lun": 0,
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-12-01",
+      "name": "[concat(variables('vmName'),'/DatadogAgent')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Datadog.Agent",
+        "type": "DatadogWindowsAgent",
+        "typeHandlerVersion": "0.6",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "api_key": "[parameters('api-key')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.TerraformOSS/providerregistrations",
+      "apiVersion": "2018-05-01-preview",
+      "location": "westcentralus",
+      "name": "DataDog",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "providerType": "datadog",
+        "settings": {
+          "api_key": "[parameters('api-key')]",
+          "app_key": "[parameters('app-key')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.TerraformOSS/resources",
+      "apiVersion": "2018-05-01-preview",
+      "name": "Timeboard",
+      "location": "westcentralus",
+      "dependsOn": [
+				"[resourceId('Microsoft.TerraformOSS/providerregistrations', 'DataDog')]"
+			],
+      "properties": {
+        "providerId": "[resourceId('Microsoft.TerraformOSS/providerregistrations','DataDog')]",
+        "resourceType": "datadog_timeboard",
+        "settings": {
+          "title": "[concat('Timeboard From ARM Template (created via Terraform) for VM ',variables('vmName'))]",
+          "description": "created using the TerrformOSS RP in Azure Resource Manager",
+          "graph": [
+            {
+              "title": "User CPU Usage",
+              "viz": "timeseries",
+              "request": {
+                "q": "[concat('avg:system.cpu.user{host:', variables('vmName'), '}')]"
+              }
+            },
+            {
+              "title": "System CPU Usage",
+              "viz": "timeseries",
+              "request": {
+                "q": "[concat('avg:system.cpu.system{host:', variables('vmName'), '}')]"
+              }
+            },
+            {
+              "title": "Disk Read percentage",
+              "viz": "timeseries",
+              "request": {
+                "q": "[concat('avg:system.disk.read_time_pct{host:', variables('vmName'), '}')]"
+              }
+            },
+            {
+              "title": "Disk Write percentage",
+              "viz": "timeseries",
+              "request": {
+                "q": "[concat('avg:system.disk.write_time_pct{host:', variables('vmName'), '}')]"
+              }
+            },
+            {
+              "title": "Bytes Sent",
+              "viz": "timeseries",
+              "request": {
+                "q": "[concat('avg:system.net.bytes_sent{host:', variables('vmName'), '}')]"
+              }
+            },
+            {
+              "title": "Bytes Received",
+              "viz": "timeseries",
+              "request": {
+                "q": "[concat('avg:system.net.bytes_rcvd{host:', variables('vmName'), '}')]"
+              }
+            },
+            {
+              "title": "Memory Used",
+              "viz": "timeseries",
+              "request": {
+                "q": "[concat('avg:system.mem.used{host:', variables('vmName'), '}')]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "hostname": {
+      "type": "string",
+      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+    }
+  }
+}

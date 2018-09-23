@@ -20,10 +20,6 @@
     }
   ],
   "outputs": {
-    "id": {
-      "type": "string",
-      "value": "[variables('storageAccountId')]"
-    },
     "unmanaged": {
       "type": "object",
       "value": "[if(bool('true'), json(concat('{\"uri\": \"', concat(reference(variables('storageAccountId')).primaryEndpoints.blob, 'osdisk.vhd'), '\"}')), json('null'))]"
@@ -31,10 +27,6 @@
     "managed": {
       "type": "object",
       "value": "[if(bool('true'), json(concat('{\"storageAccountType\": \"Premium_LRS\"}')), json('null'))]"
-    },
-    "tags": {
-      "type": "object",
-      "value": "[reference(variables('storageAccountName'))]"
     },
     "suffix": {
       "type": "string",

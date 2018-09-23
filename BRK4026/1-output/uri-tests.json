@@ -13,24 +13,13 @@
       "northeurope",
       "westeurope"
     ],
-    //"test": "[deployment('oldname').templatelink.uri]",
     "faultDomain": "[if(contains(variables('threeFaultDomainRegions'), resourceGroup().location), 3, 2)]"
-    //"faultDomain": "[variables('faultDomainRegion')[resourceGroup().location]]"
   },
   "resources": [],
   "outputs": {
     "fd":{
       "type": "int",
       "value": "[variables('faultDomain')]"
-    },
-    "trueOutput": {
-      "type": "string",
-      //"value": "[if(bool('false'), reference(resourceId('rg', 'Microsoft.Storage/storageAccounts/', 'notthere'), '2015-06-15').primaryEndpoints.blob, 'false')]"
-      "value": "commented out"
-    },
-    "falseOutput": {
-      "type": "string",
-      "value": "[if(bool('false'), 'true', 'false')]"
     },
     "uriTrailingSlash": {
       "type": "string",

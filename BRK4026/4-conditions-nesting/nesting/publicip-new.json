@@ -1,0 +1,95 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location"
+      }
+    },
+    "publicIPAddressResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource Group"
+      }
+    },
+    "publicIPAddressName": {
+      "type": "string",
+      "metadata": {
+        "description": "Public IP Address Name"
+      }
+    },
+    "publicIPAddressType": {
+      "type": "string",
+      "metadata": {
+        "description": "Public IP Address Type (e.g. Static or Dynamic)"
+      }
+    },
+    "subnet1Ref": {
+      "type": "string",
+      "metadata": {
+        "description": "subnet 1 reference ID"
+      }
+    },
+    "network_NIC_fg11_Name": {
+      "type": "string",
+      "metadata": {
+        "description": "NIC0 interface name"
+      }
+    },
+    "networkSecurityGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Network Security Group Name"
+      }
+    }
+
+  },
+  "variables": {
+    "publicIPID": "[resourceID('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]",
+    "apiVer": "2015-06-15"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('publicIPAddressName')]",
+      "apiVersion": "[variables('apiVer')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIPAddressType')]"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVer')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('network_NIC_fg11_Name')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+          "[variables('publicIPID')]"
+        ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('subnet1Ref')]"
+              },
+              "publicIPAddress": {
+                "id": "[variables('publicIPID')]"
+              }
+            }
+          }
+        ],
+      "networkSecurityGroup": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+      }
+    }
+  }
+],
+    "outputs": {
+
+    }
+}

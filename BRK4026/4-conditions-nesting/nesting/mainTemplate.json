@@ -1,0 +1,749 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "virtualMachineName": {
+      "type": "string"
+    },
+    "virtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v2"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "storageAccountName": {
+      "type": "string"
+    },
+    "storageAccountResourceGroup": {
+      "type": "string"
+    },
+    "virtualNetworkNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Identify whether to use a new or existing vnet"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string"
+    },
+    "virtualNetworkResourceGroup": {
+      "type": "string"
+    },
+    "addressPrefix": {
+      "type": "string",
+      "defaultValue": "10.2.0.0/16"
+    },
+    "subnet1Name": {
+      "type": "string"
+    },
+    "subnet1Prefix": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "storageAccountNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Identifies whether to use new or existing Storage Account"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS"
+    },
+    "publicIPNewOrExistingOrNone": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing",
+        "none"
+      ],
+      "metadata": {
+        "description": "Identify if to use a public IP and if so whether it is new"
+      }
+    },
+    "publicIpAddressName": {
+      "type": "string"
+    },
+    "publicIpAddressType": {
+      "defaultValue": "Static",
+      "allowedValues": [
+        "Dynamic",
+        "Static"
+      ],
+      "type": "string"
+    },
+    "publicIpAddressResourceGroup": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Resource group to which the Public IP belongs."
+      }
+    },
+    "artifactsBaseUrl": {
+      "type": "string",
+      "defaultValue": "https://gallery.azure.com/artifact/20151001/veritas.backup-exec-16backup-exec-16-standard.1.0.2/Artifacts",
+      "metadata": {
+        "description": "Base URL of the solution template gallery package",
+        "artifactsBaseUrl": ""
+      }
+    }
+  },
+  "variables": {
+    "vnetId": "[resourceId(parameters('virtualNetworkResourceGroup'),concat('Microsoft.Network','/','virtualNetworks'),parameters('virtualNetworkName'))]",
+    "subnet1Ref": "[concat(variables('vnetId'), '/subnets/', parameters('subnet1Name'))]",
+    "networkInterfaceName": "[concat(parameters('virtualMachineName'), '-NIC0')]",
+    "storageAccountSetupURL": "[concat(parameters('artifactsBaseUrl'),'/','storageAccount-',parameters('storageAccountNewOrExisting'),'.json')]",
+    "publicIPSetupURL": "[concat(parameters('artifactsBaseUrl'),'/','publicip-',parameters('publicIPNewOrExistingOrNone'),'.json')]",
+    "virtualNetworkSetupURL": "[concat(parameters('artifactsBaseUrl'),'/','vnet-',parameters('virtualNetworkNewOrExisting'),'.json')]",
+    "nsgName": "[concat(parameters('virtualMachineName'), '-NSG')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "Network Security Group"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "rdp-rule",
+            "properties": {
+              "description": "Allow RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-6101",
+            "properties": {
+              "description": "Allow tcp 6101-6103",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "6101-6103",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-10000",
+            "properties": {
+              "description": "Allow tcp 10000",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "10000",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-3527",
+            "properties": {
+              "description": "Allow tcp 3527",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3527",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 103,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-6106",
+            "properties": {
+              "description": "Allow tcp 6106",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "6106",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 104,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-1125",
+            "properties": {
+              "description": "Allow tcp 1125",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1125",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 105,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-1434",
+            "properties": {
+              "description": "Allow udp 1434",
+              "protocol": "Udp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1434",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 106,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-135",
+            "properties": {
+              "description": "Allow tcp 135-139",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "135-139",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 107,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-135udp",
+            "properties": {
+              "description": "Allow udp 135-139",
+              "protocol": "Udp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "135-139",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 108,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-445",
+            "properties": {
+              "description": "Allow tcp 445",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "445",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 109,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-3106",
+            "properties": {
+              "description": "Allow tcp 3106",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3106",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-1030",
+            "properties": {
+              "description": "Allow tcp 1030-1039",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1030-1039",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 111,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-21",
+            "properties": {
+              "description": "Allow tcp 21",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "21",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 112,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-80",
+            "properties": {
+              "description": "Allow tcp 80",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 113,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-443",
+            "properties": {
+              "description": "Allow tcp 443",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 114,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-5633",
+            "properties": {
+              "description": "Allow tcp 5633",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "5633",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 115,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-10082",
+            "properties": {
+              "description": "Allow tcp 10082",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "10082",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 116,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-10102",
+            "properties": {
+              "description": "Allow tcp 10102",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "10102",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 117,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-1804",
+            "properties": {
+              "description": "Allow udp 1804 ",
+              "protocol": "Udp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1804",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 119,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-20481",
+            "properties": {
+              "description": "Allow tcp 20481",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "20481",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-20483",
+            "properties": {
+              "description": "Allow tcp ",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "20483",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 121,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-20485",
+            "properties": {
+              "description": "Allow tcp 20485",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "20485",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 122,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-20487",
+            "properties": {
+              "description": "Allow tcp 20487",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "20487",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 123,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-8181",
+            "properties": {
+              "description": "Allow tcp 8181",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8181",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 124,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-8443",
+            "properties": {
+              "description": "Allow tcp 8443",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8443",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 125,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-9000",
+            "properties": {
+              "description": "Allow tcp 9000",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "9000",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 126,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-14300",
+            "properties": {
+              "description": "Allow tcp 14300",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "14300",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 127,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-2638",
+            "properties": {
+              "description": "Allow Udp 2638",
+              "protocol": "Udp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "2638",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 128,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-13730",
+            "properties": {
+              "description": "Allow tcp 13730",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "13730",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 129,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-1434tcp",
+            "properties": {
+              "description": "Allow tcp 1434",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1434",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-3999",
+            "properties": {
+              "description": "Allow tcp 3999",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3999",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 131,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-rule-763",
+            "properties": {
+              "description": "Allow tcp 763",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "763",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 132,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SettingUpStorageAccount",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('storageAccountSetupURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "storageAccountType": {
+            "value": "[parameters('storageAccountType')]"
+          },
+          "storageAccountName": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "storageAccountExistingRG": {
+            "value": "[parameters('storageAccountResourceGroup')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "SettingUpVirtualNetwork",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('virtualNetworkSetupURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vnetName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vnetAddressPrefix": {
+            "value": "[parameters('addressPrefix')]"
+          },
+          "subnet1Name": {
+            "value": "[parameters('subnet1Name')]"
+          },
+          "subnet1AddressPrefix": {
+            "value": "[parameters('subnet1Prefix')]"
+          },
+          "vnetResourceGroup": {
+            "value": "[parameters('virtualNetworkResourceGroup')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "SettingUpPublicIPandFollowing",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'SettingUpVirtualNetwork')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('publicIPSetupURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "publicIPAddressName": {
+            "value": "[parameters('publicIpAddressName')]"
+          },
+          "publicIPAddressType": {
+            "value": "[parameters('publicIpAddressType')]"
+          },
+          "publicIPAddressResourceGroup": {
+            "value": "[parameters('publicIpAddressResourceGroup')]"
+          },
+          "network_NIC_fg11_Name": {
+            "value": "[variables('networkInterfaceName')]"
+          },
+          "subnet1Ref": {
+            "value": "[reference('Microsoft.Resources/deployments/SettingUpVirtualNetwork', '2015-01-01').outputs.subnet1ID.value]"
+          },
+          "networkSecurityGroupName": {
+            "value": "[variables('nsgName')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[parameters('virtualMachineName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'SettingUpPublicIPandFollowing')]",
+        "[concat('Microsoft.Resources/deployments/', 'SettingUpStorageAccount')]"
+      ],
+      "properties": {
+        "osProfile": {
+          "computerName": "[parameters('virtualMachineName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "veritas",
+            "offer": "backup-exec-16-standard",
+            "sku": "backup_exec-16-standard",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[parameters('virtualMachineName')]",
+            "vhd": {
+              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('virtualMachineName'), '-', uniquestring(resourceGroup().id), '-osdisk', '.vhd')]"
+            },
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net')]" //use reference()
+          }
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-06-15",
+          "type": "extensions",
+          "name": "config-app",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+          ],
+          "properties": {
+            "autoUpgradeMinorVersion": true,
+            "protectedSettings": {
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File BEInstall.ps1 ', parameters('adminUsername'), ' ', parameters('adminPassword'), ' OPT1')]"
+            },
+            "publisher": "Microsoft.Compute",
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('artifactsBaseUrl'),'/BEInstall.ps1')]"
+              ]
+            },
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4"
+          }
+        }
+      ]
+    }
+  ]
+}

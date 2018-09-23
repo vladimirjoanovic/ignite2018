@@ -1,0 +1,35 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "someThing": {
+      "type": "string",
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "leftBracket": "[",
+    "note": "to begin an expression with [ just use a double [[",
+    "rightBracket": "]",
+    "blobName": "[last(split('https://templatebotstorage.blob.core.windows.net/vhds/existinggenwinvm.vhd', '/'))]"
+  },
+  "resources": [],
+  "outputs": {
+    "sample": {
+      "type": "string",
+      "value": "[concat(variables('leftBracket'), 'dbo', variables('rightBracket'), '.', variables('leftBracket'), 'table', variables('rightBracket')) ]"
+    },
+    "sample2": {
+      "type": "string",
+      "value": "[concat(variables('leftBracket'), variables('leftBracket'), 'dbo', variables('rightBracket'), '.', variables('leftBracket'), 'table', variables('rightBracket'), variables('rightBracket')) ]"
+    },
+    "sq":{
+      "type": "string",
+      "value": "[concat('''Something in single quotes - '' ', 'and something not')]"
+    },
+    "someThing": {
+      "type": "string",
+      "value": "[[variables('blobName')]"
+    }
+  }
+}

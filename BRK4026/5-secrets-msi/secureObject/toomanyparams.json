@@ -1,0 +1,208 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "01": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "02": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "03": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "04": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "05": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "06": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "07": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "08": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "09": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0a": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0b": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0c": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0d": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0e": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0f": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0g": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0h": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0i": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0j": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0k": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0l": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0m": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0n": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0o": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0p": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0q": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0r": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0s": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0t": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0u": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0v": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0w": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0x": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0y": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "0z": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "10": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "11": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "12": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "13": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "14": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "011": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "013": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "012": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "014": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "015": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "016": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "017": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "018": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "019": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "010": {
+            "type": "string",
+            "defaultValue": ""
+        }
+    },
+    "resources": [],
+    "outputs": {}
+}

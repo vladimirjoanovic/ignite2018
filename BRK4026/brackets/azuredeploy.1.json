@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "one": {
+      "type": "string",
+      "defaultValue": "[parameters('two')]"
+    },
+    "two": {
+      "type": "string",
+      "defaultValue": "[concat('foo-', parameters('one'))]"
+      
+    }
+  },
+  "resources": [ ],
+  "outputs": {
+    "customData": {
+      "type": "string",
+      "value": "[parameters('two')]"
+    }
+  }
+}

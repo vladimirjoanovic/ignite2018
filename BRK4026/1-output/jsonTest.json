@@ -1,0 +1,44 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "variables": {
+    "storageAccountName": "[uniqueString(resourceGroup().id)]",
+    "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2017-10-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "Storage",
+      "properties": {},
+      "sku": {
+        "name": "Standard_LRS"
+      }
+    }
+  ],
+  "outputs": {
+    "id": {
+      "type": "string",
+      "value": "[variables('storageAccountId')]"
+    },
+    "unmanaged": {
+      "type": "object",
+      "value": "[if(bool('true'), json(concat('{\"uri\": \"', concat(reference(variables('storageAccountId')).primaryEndpoints.blob, 'osdisk.vhd'), '\"}')), json('null'))]"
+    },
+    "managed": {
+      "type": "object",
+      "value": "[if(bool('true'), json(concat('{\"storageAccountType\": \"Premium_LRS\"}')), json('null'))]"
+    },
+    "tags": {
+      "type": "object",
+      "value": "[reference(variables('storageAccountName'))]"
+    },
+    "suffix": {
+      "type": "string",
+      "value": "[replace(split(reference(variables('storageAccountId')).primaryEndpoints.blob, 'blob.')[1], '/', '')]"
+    }
+  }
+}

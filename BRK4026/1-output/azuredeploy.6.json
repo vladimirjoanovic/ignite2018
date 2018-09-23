@@ -1,0 +1,32 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "variables": {
+    "publicIpName": "samplePip"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIpName')]",
+      "apiVersion": "2017-11-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "bmoore-pip-1"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "pipFqdn": {
+      "type": "string",
+      "value": "[reference(variables('publicIpName')).dnsSettings.fqdn]"
+    },
+    "pipIp": {
+      "type": "string",
+      "value": "[reference(variables('publicIpName')).ipAddress]" //this will fail on dynamic ip
+    }
+  }
+}

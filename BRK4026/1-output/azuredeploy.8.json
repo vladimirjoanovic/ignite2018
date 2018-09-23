@@ -1,0 +1,45 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "variables": {
+    "storageApiVersion": "2016-01-01",
+    "computeLocation": "[resourceGroup().location]",
+    "storageAccountType": "Standard_LRS",
+    "vmStorageAccountName0": "[toLower(concat(uniqueString(resourceGroup().id), '1', '0' ))]",
+    "uniqueStringArrayVar": {
+      "copy": [
+        {
+          "name": "uniqueStringArray0",
+          "count": 5,
+          "input": {
+            "uniqueString": "[concat(variables('vmStorageAccountName0'), copyindex('uniqueStringArray0'))]"
+          }
+        }
+      ]
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('storageApiVersion')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('uniqueStringArrayVar')['uniqueStringArray0'][copyIndex()]['uniqueString']]",
+      "location": "[variables('computeLocation')]",
+      "dependsOn": [],
+      "properties": {},
+      "copy": {
+        "name": "storageLoop",
+        "count": 5
+      },
+      "kind": "Storage",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "tags": {
+        "resourceType": "Service Fabric"
+      }
+    }
+  ],
+  "outputs": {}
+  }
+

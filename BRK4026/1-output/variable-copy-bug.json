@@ -1,0 +1,43 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": { },
+  "variables": {
+    "ok": "ok",
+    "nestedOk": "[variables('ok')]",
+    "testObj": {
+      "copy": [
+        {
+          "name": "testObjArray",
+          "count": 3,
+          "input": {
+            "someProperty": "[concat('test', variables('ok'), copyindex('testObjArray'))]"
+          }
+        }
+      ]
+    },
+    "badTestObj": {
+      "copy": [
+        {
+          "name": "badTestObjArray",
+          "count": 3,
+          "input": {
+            "someProperty": "[concat('test', variables('nestedOk'), copyindex('badTestObjArray'))]"
+          }
+        }
+      ]
+    }
+  },
+  "resources": [
+  ],
+  "outputs": {
+    "good":{
+      "type": "object",
+      "value": "[variables('testObj')]"
+    },
+    "bad":{
+      "type": "object",
+      "value": "[variables('badTestObj')]"
+    }
+  }
+}

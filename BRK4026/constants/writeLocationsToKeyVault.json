@@ -1,0 +1,46 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "keyVaultName": {
+            "type": "string",
+            "defaultValue": "bmoore-msft",
+            "metadata": {
+                "description": "Name of the Key Vault"
+            }
+        },
+        "secretObject": {
+            "type": "object",
+            "defaultValue": {
+                "westus": {
+                    "locationCode": "westus"
+                },
+                "eastus": {
+                    "locationCode": "eastus"
+                },
+                "westerneurope": {
+                    "locationCode": "westeu"
+                },
+                "southeastasia": {
+                    "locationCode": "seasia"
+                },
+                "westus2": {
+                    "locationCode": "westus2"
+                }
+            },
+            "metadata": {
+                "description": "location map"
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "name": "[concat(parameters('keyVaultName'), '/locationCodes')]",
+            "apiVersion": "2018-02-14",
+            "properties": {
+                "value": "[string(parameters('secretObject'))]"
+            }
+        }
+    ]
+}

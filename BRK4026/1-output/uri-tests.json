@@ -1,0 +1,80 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "variables": {
+    "threeFaultDomainRegions": [
+      "eastus",
+      "eastus2",
+      "westus",
+      "centralus",
+      "northcentralus",
+      "southcentralus",
+      "northeurope",
+      "westeurope"
+    ],
+    //"test": "[deployment('oldname').templatelink.uri]",
+    "faultDomain": "[if(contains(variables('threeFaultDomainRegions'), resourceGroup().location), 3, 2)]"
+    //"faultDomain": "[variables('faultDomainRegion')[resourceGroup().location]]"
+  },
+  "resources": [],
+  "outputs": {
+    "fd":{
+      "type": "int",
+      "value": "[variables('faultDomain')]"
+    },
+    "trueOutput": {
+      "type": "string",
+      //"value": "[if(bool('false'), reference(resourceId('rg', 'Microsoft.Storage/storageAccounts/', 'notthere'), '2015-06-15').primaryEndpoints.blob, 'false')]"
+      "value": "commented out"
+    },
+    "falseOutput": {
+      "type": "string",
+      "value": "[if(bool('false'), 'true', 'false')]"
+    },
+    "uriTrailingSlash": {
+      "type": "string",
+      "value": "[uri('http://azure.com/', '/file.json')]"
+    },
+    "uriNoTrailingSlash": {
+      "type": "string",
+      "value": "[uri('http://azure.com', 'file.json')]"
+    },
+    "uriTrimmedDot": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path/file.json', '.')]"
+    },
+    "uriTrimmedSlash": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path/file.json', '/')]"
+    },
+    "uriTrailingSlashWithPath": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path/', 'file.json')]"
+    },
+    "uriNoTrailingSlashWithPath": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path', 'file.json')]"
+    },
+    "uriNoTrailingSlashWithPathAndPath": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path', 'folder/file.json')]"
+    },
+    "uriNoTrailingSlashWithPathAndPathSlashNoSlash": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path/', 'folder/file.json')]"
+    },
+    "uriNoTrailingSlashWithPathAndPathNoSlashSlash": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path', '/folder/file.json')]"
+    },
+    "uriNoTrailingSlashWithPathAndPathSlashSlash": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path/', '/folder/file.json')]"
+    },
+    "rGresourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Resources/resourceGroups', resourceGroup().name)]"
+    }
+  }
+}

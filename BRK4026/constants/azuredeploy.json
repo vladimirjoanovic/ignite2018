@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subscription": {
+      "type": "string",
+      "defaultValue": "[subscription().subscriptionId]"
+    },
+    "resourceGroup": {
+      "type": "string",
+      "defaultValue": "constants"
+    },
+    "deployment": {
+      "type": "string",
+      "defaultValue": "locationCodes"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "southeastasia"
+    },
+    "ref": {
+      "type": "string",
+      "defaultValue": "[reference(resourceId(parameters('subscription'), parameters('resourceGroup'), 'Microsoft.Resources/deployments', parameters('deployment')), '2018-05-01').outputs.locationCode.value[parameters('location')].locationCode]"
+    }
+   },
+  "variables": { },
+  "resources": [ ],
+  "outputs": {
+    "locationCode": {
+      "type": "string",
+      "value": "[parameters('ref')]"
+    }
+  }
+}

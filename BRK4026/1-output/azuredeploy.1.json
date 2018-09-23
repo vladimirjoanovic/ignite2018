@@ -1,0 +1,41 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "variables": {
+    "note": "If you can GET it... you can reference() it...",
+    "vmssId": "/subscriptions/ceaedbb7-b827-4195-b55f-de9b6732010b/resourceGroups/aVMSS/providers/Microsoft.Compute/virtualMachineScaleSets/syncgateway",
+    "vmssIdVm": "/subscriptions/ceaedbb7-b827-4195-b55f-de9b6732010b/resourceGroups/AVMSS/providers/Microsoft.Compute/virtualMachineScaleSets/syncgateway/virtualMachines/0",
+    "vmssName": "syncgateway",
+    "vmssPipId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', 'avmss', '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('vmssName'), '/virtualMachines/0/networkInterfaces/nic/ipConfigurations/ipconfig/publicIPAddresses/public')]",
+      "testArray": {
+        "copy": [
+          {
+            "name": "testArrayLoop",
+            "count": 5,
+            "input": {
+              "someValue": "[concat('test', copyindex('testArrayLoop'))]"
+            }
+          }
+        ]
+      }  
+  },
+  "resources": [],
+  "outputs": {
+    "vmssPipFqdn": {
+      "type": "string",
+      "value": "reference(variables('vmssPiPId'), '2017-03-30').dnsSettings.fqdn]",
+      "metadata": {
+        "note": "I removed the square bracket as I'm testing...  oh yeah, metadata can be added anywhere..."
+      }
+    },
+    "vmssPipIp": {
+      "type": "string",
+      "value": "reference(variables('vmssPiPId'), '2017-03-30').ipAddress]"
+    },
+    "stringArray": {
+      "type": "object",
+      "value": "[variables('testArray')]"
+    }
+  }
+}

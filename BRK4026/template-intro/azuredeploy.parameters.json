@@ -1,0 +1,41 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "anInteger": {
+      "value": 4
+    },
+    "aString": {
+      "value": "Maybe"
+    },
+    "aSecureString": {
+      "value": "$ecretPAssw0rd!"
+    },
+    "anArray": {
+      "value": [ "c", "d", "e", "f" ]
+    },
+    "aBool": {
+      "value": true
+    },
+    "anObject": {
+      "value": {
+        "bar": "foo",
+        "niftyProperty": [ 4,5,6 ]
+      }
+    },
+    "aSecureObject": {
+      "value": {
+        "noteToSelf": "Don't keep secrets in plain text...",
+        "bestPractice": "use keyVault"
+      }
+    },
+    "aKeyVaultSecret": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/[xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx]/resourceGroups/[resourceGroupName]/providers/Microsoft.KeyVault/vaults/[KeyVaultName]"
+        },
+        "secretName": "adminPassword"
+      }
+    }
+  }
+}

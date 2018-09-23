@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": { },
+  "variables": {
+      "locationSettings": {
+        "westus": {  "locationCode": "westus" },
+        "eastus": { "locationCode": "eastus" },
+        "westerneurope": { "locationCode": "westeu" },
+        "southeastasia": { "locationCode": "seasia" },
+        "westus2": { "locationCode": "westus2" }
+      }  
+  },
+  "resources": [ ],
+  "outputs": {
+    "locationCode": {
+      "type": "object",
+      "value": "[variables('locationSettings')]"
+    }
+  }
+}

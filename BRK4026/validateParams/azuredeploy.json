@@ -1,0 +1,28 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "realParam": {
+      "type":  "string",
+      "defaultValue": "test"
+    },
+    "fakeParam": {
+      "type": "bool",
+      "allowedValues": [
+        true
+      ],
+      "defaultValue": "[equals(parameters('realParam'), 'test')]"
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+
+  ],
+  "outputs": {
+    "test": {
+      "type": "string",
+      "value": "base64..."
+    }
+  }
+}

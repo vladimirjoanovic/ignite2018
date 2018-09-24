@@ -179,6 +179,13 @@
         "UbuntuServer_16.04-LTS",
         "WindowsServer_2016-DataCenter"
       ]
+    },
+    "bootDiagsStorageAccountId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "storageAccount resourceId for boot diags - empty string disables boot diags"
+      }
     }
   },
   "variables": {
@@ -207,7 +214,7 @@
       "provisionVmAgent": "true"
     },
     "publicIPAddressName": "publicIp",
-    "enableBootDiags": "[not(equals(parameters('storageAccountId'), ''))]",
+    "enableBootDiags": "[not(equals(parameters('bootDiagsStorageAccountId'), ''))]",
     "nicName": "[concat(parameters('vmName'), '-nic')]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,

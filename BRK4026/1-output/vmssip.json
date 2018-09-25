@@ -9,7 +9,6 @@
     "rgName": "ignite-vmss",
     "vmssName": "ignite",
     "vmssId": "[resourceId(variables('rgName'), 'Microsoft.Compute/virtualMachineScaleSets', variables('vmssName'))]",
-    "vmssIdVms": "[concat(variables('vmssId'), '/virtualMachines')]",
     "vmssIdVm": "[concat(variables('vmssId'), '/virtualMachines/3')]",
     "vmssPipId": "[concat(variables('vmssIdVm'), '/networkInterfaces/igniteNic/ipConfigurations/igniteIpConfig/publicIPAddresses/pub1')]",
       "testVar": {
@@ -37,7 +36,7 @@
     "vmssPipIp": {
       "type": "string",
       "value": "[reference(variables('vmssPiPId'), '2017-03-30').ipAddress]",
-      "metadata": "this works anywhere"
+      "metadata": "this metadata property works almpost anywhere"
     },
     "testArray": {
       "type": "object",

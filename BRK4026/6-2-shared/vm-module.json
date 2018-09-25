@@ -12,6 +12,8 @@
     "vmName": {
       "type": "string",
       "defaultValue": "linux-vm",
+      "minLength": 1,
+      "maxLength": 64,
       "metadata": {
         "description": "Name for the Virtual Machine."
       }
@@ -68,6 +70,11 @@
     "storageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Premium_LRS",
+        "StandardSSD_LRS"
+      ],
       "metadata": {
         "description": "Storage account type"
       }
@@ -82,6 +89,10 @@
     "virtualNetworkNewOrExisting": {
       "type": "string",
       "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
       "metadata": {
         "description": "Determines whether or not a new virtual network should be provisioned."
       }
@@ -164,7 +175,7 @@
     },
     "publicIpSku": {
       "type": "string",
-      "defaultValue": "Basic",
+      "defaultValue": "Standard",
       "allowedValues": [
         "Basic",
         "Standard"
@@ -193,6 +204,30 @@
       ],
       "metadata": {
         "description": "The array contains the size of each data disk.  The size of the array determines the number of data disks."
+      }
+    },
+    "zones": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Zones to be used for the VM."
+      }
+    },
+    "availabilitySetName": {
+      "type": "string",
+      "defaultValue": "availabilitySet",
+      "metadata": {
+        "description": "Name of the availabilitySet to use"
+      }
+    },
+    "validateParams": {
+      "type": "bool",
+      "allowedValues": [
+        true
+      ],
+      "defaultValue": "[if(and(greater(length(parameters('zones')),0), not(equals(parameters('publicIpSku'), 'Standard'))), bool('false'), bool('true'))]",
+      "metadata": {
+        "description": "Check to see if the publicIp SKU is Standard when using zones."
       }
     }
   },
@@ -238,7 +273,10 @@
     "publicIpAddressId": {
       "id": "[resourceId(parameters('publicIpResourceGroupName'), 'Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
     },
-    "networkSecurityGroupName": "nsg-remote-access"
+    "networkSecurityGroupName": "nsg-remote-access",
+    "availabilitySet": {
+      "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
+    }
   },
   "resources": [
     {
@@ -349,7 +387,11 @@
         "[parameters('storageAccountName')]",
         "[variables('nicName')]"
       ],
+      "zones":[
+        
+      ],
       "properties": {
+        "availabilitySet": "[if(empty(parameters('availabilitySetName')), json('null'), variables('availabilitySet'))]",
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },

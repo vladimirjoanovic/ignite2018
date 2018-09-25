@@ -8,8 +8,9 @@
       },
       "type": "string"
     },
-    "extensionName": {
+    "extensionNamePrefix": {
       "type": "string",
+      "defaultValue": "cse",
       "metadata": {
         "description": "name of the extension"
       }
@@ -31,8 +32,8 @@
     }
   },
   "variables": {
-    "extensionNameWindows": "[concat(parameters('extensionName'), '-windows')]",
-    "extensionNameLinux": "[concat(parameters('extensionName'), '-linux')]"
+    "extensionNameWindows": "[concat(parameters('extensionNamePrefix'), '-windows')]",
+    "extensionNameLinux": "[concat(parameters('extensionNamePrefix'), '-linux')]"
   },
   "resources": [
     {

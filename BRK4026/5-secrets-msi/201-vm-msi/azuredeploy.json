@@ -70,6 +70,7 @@
     "azureCLI2DockerImage": "azuresdk/azure-cli-python:latest",
     "vmPrefix": "vm",
     "storageAccountName": "[concat(variables('vmPrefix'),uniquestring(resourceGroup().id))]",
+    "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
     "networkSecurityGroupName": "nsg",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
@@ -79,7 +80,47 @@
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "containerName": "msi",
     "createVMUrl": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/createVM.json', parameters('_artifactsLocationSasToken')))]",
-    "createRBACUrl": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/setUpRBAC.json', parameters('_artifactsLocationSasToken')))]"
+    "createRBACUrl": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/setUpRBAC.json', parameters('_artifactsLocationSasToken')))]",
+    "isWindowsOS": "[bool(contains(toLower(variables('imageReference')[parameters('operatingSystem')].offer), 'windows'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    },
+    "imageReference": {
+      "UbuntuServer_16.04-LTS": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "16.04-LTS",
+        "version": "latest"
+      },
+      "UbuntuServer_18.04-LTS": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "18.04-LTS",
+        "version": "latest"
+      },
+      "WindowsServer_2016-DataCenter": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2016-Datacenter",
+        "version": "latest"
+      }
+    },
+    "windowsConfiguration": {
+      "provisionVmAgent": "true"
+    },
+    "publicIPAddressName": "publicIp",
+    "nicName": "nic",
+    "contributor": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+    "RBACResourceName": "[concat(variables('storageAccountName'), '/Microsoft.Authorization/', guid(resourceGroup().id, deployment().name))]",
+    "RBACResourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Storage/storageAccounts/', variables('storageAccountName'), '/providers/Microsoft.Authorization/roleAssignments/', guid(resourceGroup().id, deployment().name))]"
   },
   "resources": [
     {
@@ -138,157 +179,140 @@
       }
     },
     {
-      "name": "creatingVM",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2018-07-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('Location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "apiVersion": "2018-07-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('Location')]",
       "dependsOn": [
-        "[variables('virtualNetworkName')]",
-        "[variables('storageAccountName')]",
+        "[variables('publicIPAddressName')]",
         "[variables('networkSecurityGroupName')]"
       ],
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('createVMUrl')]",
-          "contentVersion": "1.0.0.0"
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('nicName')]"
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
         },
-        "parameters": {
-          "_artifactsLocation": {
-            "value": "[parameters('_artifactsLocation')]"
-          },
-          "_artifactsLocationSasToken": {
-            "value": "[parameters('_artifactsLocationSasToken')]"
-          },
-          "adminPasswordOrKey": {
-            "value": "[parameters('adminPasswordOrKey')]"
-          },
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "authenticationType": {
-            "value": "[parameters('authenticationType')]"
-          },
-          "azureCLI2DockerImage": {
-            "value": "[variables('azureCLI2DockerImage')]"
-          },
-          "containerName": {
-            "value": "[variables('containerName')]"
-          },
-          "operatingSystem": {
-            "value": "[parameters('operatingSystem')]"
-          },
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "nsgId": {
-            "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-          },
-          "provisionExtensions": {
-            "value": false
-          },
-          "storageAccountId": {
-            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-          },
-          "storageAccountName": {
-            "value": "[variables('storageAccountName')]"
-          },
-          "subnetRef": {
-            "value": "[variables('subnetRef')]"
-          },
-          "vmSize": {
-            "value": "[parameters('vmSize')]"
-          },
-          "vmName": {
-            "value": "[variables('vmName')]"
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]",
+          "windowsConfiguration": "[if(variables('isWindowsOS'), variables('windowsConfiguration'), json('null'))]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('imageReference')[parameters('operatingSystem')]]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(variables('storageAccountId'), '2018-02-01').primaryEndpoints.blob]"
           }
         }
       }
     },
     {
-      "name": "creatingRBAC",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2016-07-01",
+      "name": "[variables('RBACResourceName')]",
+      "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
       "dependsOn": [
-        "creatingVM"
+        "[variables('vmName')]"
       ],
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('createRBACUrl')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "principalId": {
-            "value": "[reference('Microsoft.Resources/deployments/creatingVM', '2018-05-01').outputs.principalId.value]"
-          },
-          "storageAccountName": {
-            "value": "[variables('storageAccountName')]"
-          }
+        "roleDefinitionId": "[variables('contributor')]",
+        "principalId": "[reference(concat(resourceId('Microsoft.Compute/virtualMachines', variables('vmName')),'/providers/Microsoft.ManagedIdentity/Identities/default'),'2015-08-31-PREVIEW').principalId]",
+        "scope": "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName'))]"
+      }
+    },
+    {
+      "condition": "[variables('isWindowsOS')]",
+      "name": "[concat(variables('vmName'),'/cse-windows')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('RBACResourceId')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.8",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('writeblob.ps1', parameters('_artifactsLocationSasToken')))]"
+          ],
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File  .\\writeblob.ps1  -SubscriptionId ', subscription().subscriptionId, ' -TenantId ', subscription().tenantId,' -ResourceGroupName ', resourceGroup().Name, ' -StorageAccountName ', variables('storageAccountName'), ' -ContainerName ', variables('containerName'),' -Verbose')]"
         }
       }
     },
     {
-      "name": "updatingVM",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-05-01",
+      "condition": "[not(variables('isWindowsOS'))]",
+      "name": "[concat(variables('vmName'),'/cse-linux')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "creatingRBAC"
+        "[variables('RBACResourceId')]"
       ],
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('createVMUrl')]",
-          "contentVersion": "1.0.0.0"
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('scripts/writeblob.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/install-and-run-cli-2.sh', parameters('_artifactsLocationSasToken')))]"
+          ]
         },
-        "parameters": {
-          "_artifactsLocation": {
-            "value": "[parameters('_artifactsLocation')]"
-          },
-          "_artifactsLocationSasToken": {
-            "value": "[parameters('_artifactsLocationSasToken')]"
-          },
-          "adminPasswordOrKey": {
-            "value": "[parameters('adminPasswordOrKey')]"
-          },
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "authenticationType": {
-            "value": "[parameters('authenticationType')]"
-          },
-          "azureCLI2DockerImage": {
-            "value": "[variables('azureCLI2DockerImage')]"
-          },
-          "containerName": {
-            "value": "[variables('containerName')]"
-          },
-          "operatingSystem": {
-            "value": "[parameters('operatingSystem')]"
-          },
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "nsgId": {
-            "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-          },
-          "provisionExtensions": {
-            "value": true
-          },
-          "storageAccountId": {
-            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-          },
-          "storageAccountName": {
-            "value": "[variables('storageAccountName')]"
-          },
-          "subnetRef": {
-            "value": "[variables('subnetRef')]"
-          },
-          "vmSize": {
-            "value": "[parameters('vmSize')]"
-          },
-          "vmName": {
-            "value": "[variables('vmName')]"
-          }
+        "protectedSettings": {
+          "commandToExecute": "[concat('./install-and-run-cli-2.sh -i \"', variables('azureCLI2DockerImage'),'\" -a \"', variables('storageAccountName'), '\" -c \"', variables('containerName'), '\" -r \"', resourceGroup().Name, '\"')]"
         }
       }
     }

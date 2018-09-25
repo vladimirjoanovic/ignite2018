@@ -49,8 +49,13 @@
     "storageNewOrExisting": {
       "type": "string",
       "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing",
+        "none"
+      ],
       "metadata": {
-        "description": "Determines whether or not a new storage account should be provisioned."
+        "description": "Determines whether or not a new storage account should be provisioned.  'none' disables boot diags."
       }
     },
     "storageAccountName": {
@@ -180,11 +185,14 @@
         "WindowsServer_2016-DataCenter"
       ]
     },
-    "bootDiagsStorageAccountId": {
-      "type": "string",
-      "defaultValue": "",
+    "dataDiskSizes": {
+      "type": "array",
+      "defaultValue": [
+        128,
+        128
+      ],
       "metadata": {
-        "description": "storageAccount resourceId for boot diags - empty string disables boot diags"
+        "description": "The array contains the size of each data disk.  The size of the array determines the number of data disks."
       }
     }
   },
@@ -213,8 +221,8 @@
     "windowsConfiguration": {
       "provisionVmAgent": "true"
     },
-    "publicIPAddressName": "publicIp",
-    "enableBootDiags": "[not(equals(parameters('bootDiagsStorageAccountId'), ''))]",
+    "enableBootDiags": "[not(equals(parameters('storageNewOrExisting'), 'none'))]",
+    "storageAccountId": "[resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
     "nicName": "[concat(parameters('vmName'), '-nic')]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
@@ -229,7 +237,8 @@
     },
     "publicIpAddressId": {
       "id": "[resourceId(parameters('publicIpResourceGroupName'), 'Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
-    }
+    },
+    "networkSecurityGroupName": "nsg-remote-access"
   },
   "resources": [
     {
@@ -251,7 +260,7 @@
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('publicIpSku')]"
-      },    
+      },
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIpAllocationMethod')]",
         "dnsSettings": {
@@ -280,6 +289,7 @@
       }
     },
     {
+      "comments": "*** talking point - in practice, this is probably a shared resource, not provisioned here...",
       "name": "[variables('networkSecurityGroupName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2018-04-01",
@@ -347,19 +357,26 @@
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPasswordOrKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]",
+          "windowsConfiguration": "[if(variables('isWindowsOS'), variables('windowsConfiguration'), json('null'))]"
         },
         "storageProfile": {
-          "imageReference": {
-            "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "16.04-LTS",
-            "version": "latest"
-          },
+          "imageReference": "[variables('imageReference')[parameters('operatingSystem')]]",
           "osDisk": {
             "caching": "ReadWrite",
             "createOption": "FromImage"
-          }
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[length(parameters('dataDiskSizes'))]",
+              "input": {
+                "diskSizeGB": "[parameters('dataDiskSizes')[copyIndex('dataDisks')]]",
+                "lun": "[copyIndex('dataDisks')]",
+                "createOption": "Empty"
+              }
+            }
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -370,36 +387,11 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2018-02-01').primaryEndpoints.blob]"
+            "enabled": "[variables('enableBootDiags')]",
+            "storageUri": "[if(variables('enableBootDiags'), reference(variables('storageAccountId'), '2018-02-01').primaryEndpoints.blob, json('null'))]"
           }
         }
-      },
-      "resources": [
-        {
-          "type": "extensions",
-          "name": "configScript",
-          "apiVersion": "2018-04-01",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[parameters('vmName')]"
-          ],
-          "properties": {
-            "publisher": "Microsoft.Azure.Extensions",
-            "type": "CustomScript",
-            "typeHandlerVersion": "2.0",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "fileUris": [
-                "[uri(parameters('_artifactsLocation'), concat('scripts/copyfilefromazure.sh', parameters('_artifactsLocationSasToken')))]"
-              ]
-            },
-            "protectedSettings": {
-              "commandToExecute": "[concat('bash ', variables('scriptFileName'), ' ', variables('scriptArgs'))]"
-            }
-          }
-        }
-      ]
+      }
     }
   ],
   "outputs": {

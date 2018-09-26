@@ -85,17 +85,6 @@
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "2018-02-01",
-      "location": "[parameters('Location')]",
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "kind": "Storage",
-      "properties": {}
-    },
-    {
       "apiVersion": "2018-07-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
@@ -117,36 +106,11 @@
       }
     },
     {
-      "name": "[variables('networkSecurityGroupName')]",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2018-07-01",
-      "location": "[parameters('location')]",
-      "properties": {
-        "securityRules": [
-          {
-            "name": "allow-remote-access",
-            "properties": {
-              "priority": 1000,
-              "sourceAddressPrefix": "*",
-              "protocol": "Tcp",
-              "destinationPortRange": "[if(contains(toLower(parameters('operatingSystem')), 'windows'), 3389, 22)]",
-              "access": "Allow",
-              "direction": "Inbound",
-              "sourcePortRange": "*",
-              "destinationAddressPrefix": "*"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "creatingVM",
+      "name": "singleVM",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "dependsOn": [
-        "[variables('virtualNetworkName')]",
-        "[variables('storageAccountName')]",
-        "[variables('networkSecurityGroupName')]"
+        "[variables('virtualNetworkName')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -160,104 +124,42 @@
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
-          },
-          "authenticationType": {
-            "value": "[parameters('authenticationType')]"
-          },
-          "operatingSystem": {
-            "value": "[parameters('operatingSystem')]"
-          },
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "nsgId": {
-            "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-          },
-          "storageAccountId": {
-            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-          },
-          "subnetRef": {
-            "value": "[variables('subnetRef')]"
-          },
-          "vmSize": {
-            "value": "[parameters('vmSize')]"
-          },
-          "vmName": {
-            "value": "[variables('vmName')]"
           }
         }
       }
     },
     {
-      "name": "firstExtensionRun",
+      "name": "multiVMZonesAS",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "dependsOn": [
-        "creatingVM"
+        "[variables('virtualNetworkName')]"
       ],
+      "copy": {
+        "name": "multiVMLoop",
+        "count": 10
+      },
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('extensionUrl')]",
+          "uri": "[variables('createVMUrl')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
           },
-          "extensionName": {
-            "value": "cse"
-          },
-          "vmName": {
-            "value": "[variables('vmName')]"
-          },
-          "fileUris": {
-            "value": [
-              "[uri(parameters('_artifactsLocation'), concat(variables('script1File'), parameters('_artifactsLocationSasToken')))]"
-            ]
-          },
-          "commandToExecute": {
-            "value": "[variables('script1Command')]"
-          },
-          "isWindowsOS": {
-            "value": "[variables('isWindowsOs')]"
-          }
-        }
-      }
-    },
-    {
-      "name": "secondExtensionRun",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-05-01",
-      "dependsOn": [
-        "firstExtensionRun"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('extensionUrl')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "extensionName": {
-            "value": "cse"
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
           },
           "vmName": {
-            "value": "[variables('vmName')]"
+            "value": "[concat('vm-', copyIndex())]"
           },
-          "fileUris": {
-            "value": [
-              "[uri(parameters('_artifactsLocation'), concat(variables('script2File'), parameters('_artifactsLocationSasToken')))]"
-            ]
+          "availabilitySetName": {
+            "value": "availSet"
           },
-          "commandToExecute": {
-            "value": "[concat(variables('script2Command'), '\"', split(string(if(variables('isWindowsOs'), reference('firstExtensionRun').outputs.instanceView.value.substatuses[0].message, reference('firstExtensionRun').outputs.instanceView.value.statuses[0].message)), '#DATA#')[1], '\"')]"
-          },
-          "isWindowsOS": {
-            "value": "[variables('isWindowsOs')]"
+          "zones": {
+            "value": "[add(mod(copyIndex(),3),1)]"
           }
         }
       }
@@ -265,8 +167,8 @@
   ],
   "outputs": {
     "sample": {
-      "type": "object",
-      "value": "[reference('firstExtensionRun').outputs.instanceView.value]"
+      "type": "string",
+      "value": "sample"
     }
   }
 }

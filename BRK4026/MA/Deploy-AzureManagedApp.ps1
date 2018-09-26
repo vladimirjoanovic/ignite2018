@@ -1,12 +1,12 @@
 ﻿
 Param(
     [string] [Parameter(Mandatory=$true)] $AppLocation,
-    [string] [Parameter(Mandatory=$true)] $AppDefinitionResourceGroupName,
     [string] [Parameter(Mandatory=$true)] $AppDefinitionName,
+    [string] [Parameter(Mandatory=$true)] $AppParamJsonFile,
+    [string] $AppDefinitionResourceGroupName = "appDefinitions",
     [string] $AppName = $AppDefinitionName,
     [string] $ResourceGroupName = "appInstances",
-    [string] $ManagedResourceGroupName = "$appName-resources",
-    [string] $AppParamJsonFile
+    [string] $ManagedResourceGroupName = "$appName-resources"
 )
 
 #if you don't have/want a param file

@@ -207,8 +207,8 @@
       }
     },
     "zones": {
-      "type": "array",
-      "defaultValue": [],
+      "type": "string",
+      "defaultValue": "",
       "metadata": {
         "description": "Zones to be used for the VM."
       }
@@ -225,7 +225,7 @@
       "allowedValues": [
         true
       ],
-      "defaultValue": "[if(and(greater(length(parameters('zones')),0), not(equals(parameters('publicIpSku'), 'Standard'))), bool('false'), bool('true'))]",
+      "defaultValue": "[if(and(not(empty(parameters('zones'))), not(equals(toLower(parameters('publicIpSku')), 'standard'))), bool('false'), bool('true'))]",
       "metadata": {
         "description": "Check to see if the publicIp SKU is Standard when using zones."
       }
@@ -401,7 +401,7 @@
         "[parameters('storageAccountName')]",
         "[variables('nicName')]"
       ],
-      "zones": "[parameters('zones')]",
+      "zones": "[if(not(empty(parameters('zones'))), array(parameters('zones')), json('null'))]",
       "properties": {
         "availabilitySet": "[if(empty(parameters('availabilitySetName')), json('null'), variables('availabilitySet'))]",
         "hardwareProfile": {

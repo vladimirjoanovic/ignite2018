@@ -1,0 +1,48 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the resourceGroup to create"
+      }
+    }
+  },
+  "resources": [{
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2018-05-01",
+      "location": "[deployment().location]",
+      "name": "[parameters('resourceGroupName')]",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2018-05-01",
+      "name": "createStorageAccount",
+      "type": "Microsoft.Resources/deployments",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "dependsOn": [
+        "[parameters('resourceGroupName')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "resources": [{
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[uniquestring(deployment().properties.parameters.resourceGroupName.value,subscription().id)]",
+            "apiVersion": "2018-02-01",
+            "location": "[deployment().location]",
+            "sku": {
+              "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {}
+          }]
+        }
+      }
+    }
+  ]
+}

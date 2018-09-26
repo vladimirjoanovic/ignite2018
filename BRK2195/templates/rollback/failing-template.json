@@ -2,10 +2,9 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-      "storageAccountName":{
-        "type": "string",
-        "defaultValue": "[concat(uniquestring(resourceGroup().id,deployment().name, 'rollback')]"
-      }
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "[concat(uniquestring(resourceGroup().id,deployment().name, 'rollback'))]"
     },
     "location": {
       "type": "string",
@@ -15,12 +14,23 @@
       }
     }
   },
-  "functions":[
-
-  ],
-  "resources": [
-    {
-      "comment":"This storage account should get created",
+  "functions": [{
+    "namespace": "demo",
+    "members": {
+      "invalidStorageAccountName": {
+        "parameters": [{
+          "name": "accountname",
+          "type": "string"
+        }],
+        "output": {
+          "type": "string",
+          "value": "[concat('A',parameters('accountname'))]"
+        }
+      }
+    }
+  }],
+  "resources": [{
+      "comments": "This storage account should get created",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('storageAccountName')]",
       "apiVersion": "2018-02-01",
@@ -32,16 +42,16 @@
       "properties": {}
     },
     {
-      "dependsOn":[
+      "dependsOn": [
         "[parameters('storageAccountName')]"
-      ]
-      "comment":"This storage account creation will fail because the name will be invalid",
+      ],
+      "comments": "This storage account creation will fail because the name will be invalid",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[toupper(parameters('storageAccountName'))]",
+      "name": "[demo.invalidStorageAccountName(parameters('storageAccountName'))]",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "[parameters('storageAccountType')]"
+        "name": "Standard_LRS"
       },
       "kind": "Storage",
       "properties": {}
@@ -54,7 +64,7 @@
     },
     "failingStorageAccountName": {
       "type": "string",
-      "value": "[toupper(parameters('storageAccountName'))]"
+      "value": "[demo.invalidStorageAccountName(parameters('storageAccountName'))]"
     }
   }
 }

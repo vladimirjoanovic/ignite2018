@@ -98,7 +98,6 @@
     },
     "artifactsBaseUrl": {
       "type": "string",
-      "defaultValue": "https://gallery.azure.com/artifact/20151001/veritas.backup-exec-16backup-exec-16-standard.1.0.2/Artifacts",
       "metadata": {
         "description": "Base URL of the solution template gallery package",
         "artifactsBaseUrl": ""
@@ -675,7 +674,7 @@
     {
       "name": "[parameters('virtualMachineName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'SettingUpPublicIPandFollowing')]",
@@ -692,16 +691,13 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "veritas",
-            "offer": "backup-exec-16-standard",
-            "sku": "backup_exec-16-standard",
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "16.04-LTS",
             "version": "latest"
           },
           "osDisk": {
             "name": "[parameters('virtualMachineName')]",
-            "vhd": {
-              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('virtualMachineName'), '-', uniquestring(resourceGroup().id), '-osdisk', '.vhd')]"
-            },
             "createOption": "FromImage"
           }
         },
@@ -711,39 +707,8 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
             }
           ]
-        },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net')]" //use reference()
-          }
         }
-      },
-      "resources": [
-        {
-          "apiVersion": "2015-06-15",
-          "type": "extensions",
-          "name": "config-app",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
-          ],
-          "properties": {
-            "autoUpgradeMinorVersion": true,
-            "protectedSettings": {
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File BEInstall.ps1 ', parameters('adminUsername'), ' ', parameters('adminPassword'), ' OPT1')]"
-            },
-            "publisher": "Microsoft.Compute",
-            "settings": {
-              "fileUris": [
-                "[concat(parameters('artifactsBaseUrl'),'/BEInstall.ps1')]"
-              ]
-            },
-            "type": "CustomScriptExtension",
-            "typeHandlerVersion": "1.4"
-          }
-        }
-      ]
+      }
     }
   ]
 }

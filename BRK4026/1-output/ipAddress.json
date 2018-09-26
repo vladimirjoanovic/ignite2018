@@ -14,7 +14,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "bmoore-pip-1"
+          "domainNameLabel": "[uniqueString(resourceGroup().id)]"
         }
       }
     }

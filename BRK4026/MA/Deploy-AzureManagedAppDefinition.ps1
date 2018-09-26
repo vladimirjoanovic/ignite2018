@@ -26,8 +26,6 @@ if (!$ServicePrincipalObjectId) {
 }
 
 $authorization = $ServicePrincipalObjectId + ":" + $roleId
-#$authorization = "7c1752e8-668a-4aed-9405-20d1e9daf1e6:$roleId" #bmoore
-$authorization = "c0adf779-cb97-42dd-8636-d4ab620fb654:$roleId" #sp
 
 $packageFileName = $ArtifactStagingDirectory + "\application.zip"
 $packagesFiles = $ArtifactStagingDirectory + "\*.*"

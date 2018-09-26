@@ -86,17 +86,6 @@
         "description": "Name of the resource group for the existing storage account"
       }
     },
-    "virtualNetworkNewOrExisting": {
-      "type": "string",
-      "defaultValue": "new",
-      "allowedValues": [
-        "new",
-        "existing"
-      ],
-      "metadata": {
-        "description": "Determines whether or not a new virtual network should be provisioned."
-      }
-    },
     "virtualNetworkName": {
       "type": "string",
       "defaultValue": "VirtualNetwork",
@@ -104,27 +93,11 @@
         "description": "Name of the virtual network"
       }
     },
-    "addressPrefixes": {
-      "type": "array",
-      "defaultValue": [
-        "10.0.0.0/16"
-      ],
-      "metadata": {
-        "description": "Address prefix of the virtual network"
-      }
-    },
     "subnetName": {
       "type": "string",
       "defaultValue": "default",
       "metadata": {
         "description": "Name of the subnet"
-      }
-    },
-    "subnetPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/24",
-      "metadata": {
-        "description": "Subnet prefix of the virtual network"
       }
     },
     "virtualNetworkResourceGroupName": {
@@ -318,26 +291,6 @@
         "dnsSettings": {
           "domainNameLabel": "[parameters('publicIpDns')]"
         }
-      }
-    },
-    {
-      "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
-      "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2018-04-01",
-      "name": "[parameters('virtualNetworkName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": "[parameters('addressPrefixes')]"
-        },
-        "subnets": [
-          {
-            "name": "[parameters('subnetName')]",
-            "properties": {
-              "addressPrefix": "[parameters('subnetPrefix')]"
-            }
-          }
-        ]
       }
     },
     {

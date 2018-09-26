@@ -10,19 +10,17 @@ Param(
 )
 
 #if you don't have/want a param file
-$AppParamJson = @'
+<#$AppParamJson = @'
 {
   "adminUsername": { "value": "bmoore" },
   "adminPassword": { "value": "Ignite/2018" },
   "_artifactsLocationSasToken": { "value": ""}
 }
 '@
-
+#>
 $AppParamJson = Get-Content $AppParamJsonFile -Raw
 
 
-#$id = "/subscriptions/ceaedbb7-b827-4195-b55f-de9b6732010b/resourceGroups/appDefinitions/providers/Microsoft.Solutions/applicationDefinitions/ManagedStorage"
-#$id = "/subscriptions/ceaedbb7-b827-4195-b55f-de9b6732010b/resourceGroups/appDefintions/providers/Microsoft.Solutions/applicationDefinitions/VMCSEInstallFileBash"
 $id = "/subscriptions/" + (Get-AzureRmContext).Subscription.Id +"/resourceGroups/" + $AppDefinitionResourceGroupName + "/providers/Microsoft.Solutions/applicationDefinitions/" + $AppDefinitionName 
 
 $rg = (Get-AzureRmResourceGroup | Where-Object{$_.ResourceGroupName -eq $ResourceGroupName})

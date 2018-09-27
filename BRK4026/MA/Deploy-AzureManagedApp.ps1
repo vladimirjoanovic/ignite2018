@@ -9,17 +9,7 @@ Param(
     [string] $ManagedResourceGroupName = "$appName-resources"
 )
 
-#if you don't have/want a param file
-<#$AppParamJson = @'
-{
-  "adminUsername": { "value": "bmoore" },
-  "adminPassword": { "value": "Ignite/2018" },
-  "_artifactsLocationSasToken": { "value": ""}
-}
-'@
-#>
 $AppParamJson = Get-Content $AppParamJsonFile -Raw
-
 
 $id = "/subscriptions/" + (Get-AzureRmContext).Subscription.Id +"/resourceGroups/" + $AppDefinitionResourceGroupName + "/providers/Microsoft.Solutions/applicationDefinitions/" + $AppDefinitionName 
 

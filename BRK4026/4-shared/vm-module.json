@@ -116,14 +116,14 @@
     },
     "publicIpName": {
       "type": "string",
-      "defaultValue": "PublicIp",
+      "defaultValue": "[concat(parameters('vmName'), '-ip')]",
       "metadata": {
         "description": "Name of the public ip address"
       }
     },
     "publicIpDns": {
       "type": "string",
-      "defaultValue": "[concat('linux-vm-', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[concat(parameters('vmName'), uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "DNS of the public ip address for the VM"
       }
@@ -137,7 +137,7 @@
     },
     "publicIpAllocationMethod": {
       "type": "string",
-      "defaultValue": "Dynamic",
+      "defaultValue": "Static",
       "allowedValues": [
         "Dynamic",
         "Static"
@@ -188,12 +188,22 @@
     },
     "availabilitySetName": {
       "type": "string",
-      "defaultValue": "availabilitySet",
+      "defaultValue": "",
       "metadata": {
         "description": "Name of the availabilitySet to use"
       }
     },
-    "validateParams": {
+    "validateAvailabilitySet": {
+      "type": "bool",
+      "allowedValues": [
+        true
+      ],
+      "defaultValue": "[if(and(not(empty(parameters('zones'))), not(empty(parameters('availabilitySetName')))), bool('false'), bool('true'))]",
+      "metadata": {
+        "description": "Check to see if the publicIp SKU is Standard when using zones."
+      }
+    },
+    "validateZones": {
       "type": "bool",
       "allowedValues": [
         true
@@ -256,7 +266,7 @@
       "condition": "[not(empty(parameters('availabilitySetName')))]",
       "type": "Microsoft.Compute/availabilitySets",
       "apiVersion": "2018-04-01",
-      "name": "[parameters('availabilitySetName')]",
+      "name": "[if(not(empty(parameters('availabilitySetName'))), parameters('availabilitySetName'), 'none')]",
       "location": "[parameters('location')]",
       "properties": {
         "PlatformUpdateDomainCount": 2,
@@ -324,7 +334,6 @@
       "location": "[parameters('location')]",
       "dependsOn": [
         "[parameters('publicIpName')]",
-        "[parameters('virtualNetworkName')]",
         "[variables('networkSecurityGroupName')]"
       ],
       "properties": {

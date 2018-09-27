@@ -20,14 +20,30 @@
         "description": "The Location For the resources"
       },
       "defaultValue": "[resourceGroup().location]"
-    }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+          "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+  },
+  "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+          "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+  }
+
   },
   "variables": {
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "virtualNetworkName": "vnet",
-    "createVMUrl": "https://raw.githubusercontent.com/vladimirjoanovic/ignite2018/master/BRK4026/4-shared/vm-module.json"
+    "createVMUrl": "[uri(parameters('_artifactsLocation'), concat('vm-module.json', parameters('_artifactsLocationSasToken')))]",
+    "createVMUrlStatic": "https://raw.githubusercontent.com/vladimirjoanovic/ignite2018/master/BRK4026/4-shared/vm-module.json"
   },
   "resources": [
     {
@@ -88,7 +104,8 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "dependsOn": [
-        "[variables('virtualNetworkName')]"
+        "[variables('virtualNetworkName')]",
+        "singleVM"
       ],
       "copy": {
         "name": "multiVMLoop",
@@ -110,11 +127,8 @@
           "vmName": {
             "value": "[concat('vm-', copyIndex())]"
           },
-          "availabilitySetName": {
-            "value": "availSet"
-          },
           "zones": {
-            "value": "[add(mod(copyIndex(),3),1)]"
+            "value": "[string(add(mod(copyIndex(),3),1))]"
           },
           "virtualNetworkName": {
             "value": "[variables('virtualNetworkName')]"

@@ -200,7 +200,7 @@
       ],
       "defaultValue": "[if(and(not(empty(parameters('zones'))), not(empty(parameters('availabilitySetName')))), bool('false'), bool('true'))]",
       "metadata": {
-        "description": "Check to see if the publicIp SKU is Standard when using zones."
+        "description": "Check to ensure deployment is not using both Zones and AS."
       }
     },
     "validateZones": {
@@ -363,7 +363,7 @@
         "[parameters('storageAccountName')]",
         "[variables('nicName')]"
       ],
-      "zones": "[if(not(empty(parameters('zones'))), array(parameters('zones')), json('null'))]",
+      "zones": "[if(empty(parameters('zones')), json('null'), array(parameters('zones')))]",
       "properties": {
         "availabilitySet": "[if(empty(parameters('availabilitySetName')), json('null'), variables('availabilitySet'))]",
         "hardwareProfile": {

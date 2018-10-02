@@ -3,9 +3,6 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
   },
-  "variables": {
-    "comment": "Azure QuickStarts"
-  },
   "resources": [
   ],
   "outputs": {

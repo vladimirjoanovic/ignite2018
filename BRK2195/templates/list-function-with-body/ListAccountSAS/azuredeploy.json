@@ -1,0 +1,32 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceGroup": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]"
+        },
+        "storageAccountName": {
+            "type": "string"
+        },
+        "sasTokenExpiry": {
+            "type": "string",
+            "defaultValue": "2018-09-17T12:00:00Z"
+        }
+    },
+    "variables": {
+        "requestContent": {
+            "signedServices": "b",
+            "signedResourceTypes": "oc",
+            "signedPermission": "r",
+            "signedExpiry": "[parameters('sasTokenExpiry')]"
+        }
+    },
+    "resources": [],
+    "outputs": {
+        "SASToken": {
+            "type": "string",
+            "value": "[ListAccountSas(resourceId(parameters('resourceGroup'),'microsoft.storage/storageAccounts',parameters('storageAccountName')), '2018-02-01', variables('requestContent')).accountSasToken]"
+        }
+    }
+}

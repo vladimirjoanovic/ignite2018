@@ -1,0 +1,69 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "variables": {
+    "threeFaultDomainRegions": [
+      "eastus",
+      "eastus2",
+      "westus",
+      "centralus",
+      "northcentralus",
+      "southcentralus",
+      "northeurope",
+      "westeurope"
+    ],
+    "faultDomain": "[if(contains(variables('threeFaultDomainRegions'), resourceGroup().location), 3, 2)]"
+  },
+  "resources": [],
+  "outputs": {
+    "fd":{
+      "type": "int",
+      "value": "[variables('faultDomain')]"
+    },
+    "uriTrailingSlash": {
+      "type": "string",
+      "value": "[uri('http://azure.com/', '/file.json')]"
+    },
+    "uriNoTrailingSlash": {
+      "type": "string",
+      "value": "[uri('http://azure.com', 'file.json')]"
+    },
+    "uriTrimmedDot": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path/file.json', '.')]"
+    },
+    "uriTrimmedSlash": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path/file.json', '/')]"
+    },
+    "uriTrailingSlashWithPath": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path/', 'file.json')]"
+    },
+    "uriNoTrailingSlashWithPath": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path', 'file.json')]"
+    },
+    "uriNoTrailingSlashWithPathAndPath": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path', 'folder/file.json')]"
+    },
+    "uriNoTrailingSlashWithPathAndPathSlashNoSlash": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path/', 'folder/file.json')]"
+    },
+    "uriNoTrailingSlashWithPathAndPathNoSlashSlash": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path', '/folder/file.json')]"
+    },
+    "uriNoTrailingSlashWithPathAndPathSlashSlash": {
+      "type": "string",
+      "value": "[uri('http://azure.com/path/', '/folder/file.json')]"
+    },
+    "rGresourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Resources/resourceGroups', resourceGroup().name)]"
+    }
+  }
+}

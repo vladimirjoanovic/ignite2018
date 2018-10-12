@@ -1,1 +1,3 @@
 *.local.*
+.vscode/settings.json
+0-tools

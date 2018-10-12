@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+     "contentVersion": "1.0.0.0",
+     "parameters": {
+         "resourceGroup":{
+             "type": "string",
+             "defaultValue": "ARM_Deploy_Staging"
+         },
+         "storageAccountName": {
+             "type": "string",
+             "defaultValue": "[concat('stage', take(replace(subscription().subscriptionId, '-', ''), 19))]"
+         }
+     },
+     "variables": {
+       "requestContent": {
+           "signedServices": "b",
+           "signedResourceTypes": "s",
+           "signedPermission": "r",
+           "signedExpiry": "2019-06-27T11:37:39.6677415Z"
+       }       
+     },
+     "resources": [
+     ],
+     "outputs": {
+         "SASToken":{
+             "type": "string",
+             "value": "[listAccountSas(resourceId(parameters('resourceGroup'), 'microsoft.storage/storageAccounts', parameters('storageAccountName')), '2018-02-01', variables('requestContent')).accountSasToken]"
+         }
+     }
+}

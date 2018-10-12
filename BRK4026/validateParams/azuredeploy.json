@@ -1,0 +1,37 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "zones": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Zones to be used for the VM."
+      }
+    },
+    "publicIpSku": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Basic",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Name of the resource group for the public ip address"
+      }
+    },
+    "validateParams": {
+      "type": "bool",
+      "allowedValues": [
+        true
+      ],
+      "defaultValue": "[if(and(not(empty(parameters('zones'))), not(equals(toLower(parameters('publicIpSku')), 'standard'))), bool('false'), bool('true'))]",
+      "metadata": {
+        "description": "Check to see if the publicIp SKU is Standard when using zones."
+      }
+    }
+  },
+  "variables": {},
+  "resources": [],
+  "outputs": {}
+}

@@ -1,0 +1,60 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "osType": {
+      "type": "string",
+      "defaultValue": "WS2016",
+      "allowedValues": [
+        "WS2016",
+        "Ubuntu16",
+        "Ubuntu18"
+      ]
+    }
+  },
+  "variables": {
+    "imageRef": {
+      "Ubuntu16": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "16.04-LTS",
+        "version": "latest"
+      },
+      "Ubuntu18": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "18.04-LTS",
+        "version": "latest"
+      },
+      "WS2016": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2016-Datacenter",
+        "version": "latest"
+      }
+    },
+    "diskSize": [
+      64,
+      1024
+    ]
+  },
+  "resources": [],
+  "outputs": {
+    "test": {
+      "type": "object",
+      "value": "[variables('imageRef')[parameters('osType')]]"
+    },
+    "size1": {
+      "type": "int",
+      "value": "[mod(0,2)]"
+    },
+    "size2": {
+      "type": "int",
+      "value": "[mod(1,2)]"
+    },
+    "size3": {
+      "type": "int",
+      "value": "[mod(2,2)]"
+    }
+  }
+}

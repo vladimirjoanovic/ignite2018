@@ -1,0 +1,24 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "locationCodes": {
+      "type": "securestring"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "southeastasia"
+    }
+  },
+  "variables": {
+    "resolvedLocationCode": "[json(parameters('locationCodes'))[parameters('location')].locationCode]",
+    "storageAccountName": "[concat('prefix-', variables('resolvedLocationCode'))]"
+  },
+  "resources": [],
+  "outputs": {
+    "storageAccountName": {
+      "type": "string",
+      "value": "[variables('storageAccountName')]"
+    }
+  }
+}

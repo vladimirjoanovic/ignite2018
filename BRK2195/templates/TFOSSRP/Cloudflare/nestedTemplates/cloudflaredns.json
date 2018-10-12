@@ -1,0 +1,93 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceName":{
+            "type": "string",
+            "metadata": {
+                "description": "The name of the resource"
+            }
+        },
+        "location":{
+            "type": "string",
+            "metadata": {
+                "description": "The location of the resource"
+            },
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "providerId":{
+            "type": "string",
+            "metadata": {
+                "description": "The Cloudflare provider Resource Id"
+            }
+        },
+        "domain": {
+            "type": "string",
+            "metadata": {
+                "description": "Domain Name that is managed at Cloudflare DNS Service"
+            }
+        },
+        "domainnamelabel": {
+            "type": "string",
+            "metadata": {
+                "description": "Domain Name Label to assign to the webapp in Cloudflare DNS Service"
+            }
+        },
+        "dnsRecordValue":{
+            "type": "string",
+            "metadata": {
+                "description": "The value of the DNS Record"
+            }
+        },
+        "dnsRecordType":{
+            "type": "string",
+            "metadata": {
+                "description": "The type of the DNS Record"
+            },
+            "allowedValues": [
+                "A", "AAAA", "CNAME", "TXT", "SRV", "LOC", "MX", "NS", "SPF"
+            ]
+        },
+        "proxied":{
+            "type": "bool",
+            "metadata": {
+                "description": "Is traffic proxied by Cloudflare"
+            },
+            "defaultValue": false
+        },
+        "priority":{
+            "type": "int",
+            "defaultValue": 0,
+            "minValue": 0,
+            "maxValue": 65535
+        },
+        "ttl":{
+            "type": "int",
+            "defaultValue": 1,
+            "minValue": 1,
+            "maxValue": 2147483647
+
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.TerraformOSS/resources",
+            "apiVersion": "2018-05-01-preview",
+            "name": "[parameters('resourceName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "providerId": "[parameters('providerId')]",
+                "resourceType": "cloudflare_record",
+                "settings": {
+                    "domain": "[parameters('domain')]",
+                    "name": "[parameters('domainnamelabel')]",
+                    "value": "[parameters('dnsRecordValue')]",
+                    "type": "[parameters('dnsRecordType')]",
+                    "proxied": "[parameters('proxied')]", 
+                    "priority": "[parameters('priority')]", 
+                    "ttl": "[parameters('ttl')]"
+                }
+            }
+        }
+    ]
+}

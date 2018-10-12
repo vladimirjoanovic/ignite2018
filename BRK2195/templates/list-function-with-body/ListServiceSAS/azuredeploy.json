@@ -1,0 +1,39 @@
+{
+   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {         
+          "resourceGroup":{
+              "type": "string",
+              "defaultValue": "[resourceGroup().name]"
+          },
+          "storageAccountName": {
+              "type": "string"
+          },
+          "storageContainerName": {
+            "type": "string"
+          },
+          "blobName": {
+            "type": "string"
+          }
+      },
+      "variables": {
+        "canonicalizedResource":"[concat('/blob/',parameters('storageAccountName'),'/',parameters('storageContainerName'),'/',parameters('blobName'))]",
+        "pathToItem":"[concat(parameters('storageContainerName'),'/',parameters('blobName'),'?')]",
+        "signedResource": "[if(empty(parameters('blobName')),'c','b')]",
+        "serviceRequestContent": {
+            "signedResource": "[variables('signedResource')]",
+            "signedProtocol": "https",
+            "signedPermission": "r",
+            "canonicalizedResource":"[variables('canonicalizedResource')]",
+            "signedExpiry": "2019-06-27T11:37:39.6677415Z"
+        }       
+      },
+      "resources": [
+      ],
+      "outputs": {   
+          "URI":{
+            "type": "string",
+            "value": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2016-01-01').primaryEndpoints.blob,variables('pathToItem'),ListServiceSas(resourceId(parameters('resourceGroup'),'microsoft.storage/storageAccounts',parameters('storageAccountName')), '2018-02-01', variables('serviceRequestContent')).serviceSasToken)]"
+        }    
+      }
+}

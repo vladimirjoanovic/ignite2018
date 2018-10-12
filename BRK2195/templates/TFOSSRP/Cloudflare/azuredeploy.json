@@ -1,0 +1,376 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "mySqlDatabaseName": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('webAppName'),'db',uniquestring(deployment().name))]"
+        },
+        "mySqlAdministratorLogin": {
+            "type": "string",
+            "defaultValue": "mysqldbuser"
+        },
+        "mySqlAdministratorPassword": {
+            "type": "securestring"
+        },
+        "tfRPlocation": {
+            "type": "string",
+            "allowedValues": [
+                "westcentralus"
+            ],
+            "metadata": {
+                "description": "Location of TF RP resources (only available in 1 location for initial private preview)"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[ResourceGroup().location]",
+            "metadata": {
+                "description": "Location of resources (except insights and TF RP)"
+            }
+        },
+        "mySqlServerName": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('webAppName'),uniquestring(deployment().name))]"
+        },
+        "mySqlSkuCapacity": {
+            "type": "int",
+            "defaultValue": 2
+        },
+        "mySqlSkuFamily": {
+            "type": "string",
+            "defaultValue": "Gen4"
+        },
+        "backupRetentionDays": {
+            "type": "int",
+            "defaultValue": 7
+        },
+        "geoRedundantBackup": {
+            "type": "string",
+            "defaultValue": "Disabled"
+        },
+        "mySqlSkuName": {
+            "type": "string",
+            "defaultValue": "GP_Gen4_2"
+        },
+        "mySqlSkuSizeMB": {
+            "type": "int",
+            "defaultValue": 5120
+        },
+        "mySqlSkuTier": {
+            "type": "string",
+            "defaultValue": "GeneralPurpose"
+        },
+        "version": {
+            "type": "string",
+            "defaultValue": "5.7"
+        },
+        "charset": {
+            "type": "string",
+            "defaultValue": "utf8"
+        },
+        "collation": {
+            "type": "string",
+            "defaultValue": "utf8_general_ci"
+        },
+        "webAppName": {
+            "type": "string"
+        },
+        "domain": {
+            "type": "string",
+            "metadata": {
+                "description": "Domain Name that is managed at Cloudflare DNS Service"
+            }
+        },
+        "domainnamelabel": {
+            "type": "string",
+            "metadata": {
+                "description": "Domain Name Label to assign to the webapp in Cloudflare DNS Service"
+            }
+        },
+        "email": {
+            "type": "string",
+            "metadata": {
+                "description": "Email address for the account at Cloudflare"
+            }
+        },
+        "token": {
+            "type": "securestring",
+            "metadata": {
+                "description": "API Token for the account at Cloudflare"
+            }
+        },
+        "insightLocation": {
+            "type": "string",
+            "defaultValue": "NorthEurope",
+            "allowedValues": [
+                "EastUS",
+                "SouthCentralUS",
+                "NorthEurope",
+                "WestEurope",
+                "SoutheastAsia",
+                "WestUS2"
+            ]
+        },
+        "appServicePlanName": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('webAppName'),'plan',uniquestring(deployment().name))]"
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "proxied":{
+            "type": "bool",
+            "metadata": {
+                "description": "Is traffic proxied by Cloudflare"
+            },
+            "defaultValue": false
+        }
+    },
+    "variables": {
+        "nestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedTemplates/cloudflaredns.json'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2015-05-01",
+            "name": "[parameters('webAppName')]",
+            "type": "microsoft.insights/components",
+            "location": "[parameters('insightLocation')]",
+            "properties": {
+                "ApplicationId": "[parameters('webAppName')]",
+                "Application_Type": "web"
+            }
+        },
+        {
+            "apiVersion": "2017-08-01",
+            "name": "[parameters('appServicePlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[parameters('location')]",
+            "properties": {
+                "name": "[parameters('appServicePlanName')]"
+            },
+            "kind": "linux",
+            "sku": {
+                "name": "D1",
+                "tier": "Shared",
+                "size": "D1",
+                "family": "D",
+                "capacity": 0
+            }
+        },
+        {
+            "name": "[parameters('mySqlServerName')]",
+            "sku": {
+                "name": "[parameters('mySqlSkuName')]",
+                "tier": "[parameters('mySqlSkuTier')]",
+                "capacity": "[parameters('mySqlSkuCapacity')]",
+                "size": "[parameters('mySqlSkuSizeMB')]",
+                "family": "[parameters('mySqlSkuFamily')]"
+            },
+            "type": "Microsoft.DBforMySQL/servers",
+            "apiVersion": "2017-12-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "version": "[parameters('version')]",
+                "administratorLogin": "[parameters('mySqlAdministratorLogin')]",
+                "administratorLoginPassword": "[parameters('mySqlAdministratorPassword')]",
+                "storageProfile": {
+                    "storageMB": "[parameters('mySqlSkuSizeMB')]",
+                    "backupRetentionDays": "[parameters('backupRetentionDays')]",
+                    "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
+                },
+                "sslEnforcement": "Disabled"
+            },
+            "resources": [
+                {
+                    "name": "AllowAzureIPs",
+                    "type": "firewallrules",
+                    "apiVersion": "2017-12-01",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.DBforMySQL/servers/', parameters('mySqlServerName'), '/databases/' , parameters('mySqlDatabaseName'))]",
+                        "[concat('Microsoft.DBforMySQL/servers/', parameters('mySqlServerName'))]"
+                    ],
+                    "properties": {
+                        "startIpAddress": "0.0.0.0",
+                        "endIpAddress": "0.0.0.0"
+                    }
+                },
+                {
+                    "name": "[parameters('mySqlDatabaseName')]",
+                    "type": "databases",
+                    "apiVersion": "2017-12-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DBforMySQL/servers/', parameters('mySqlServerName'))]"
+                    ],
+                    "properties": {
+                        "charset": "[parameters('charset')]",
+                        "collation": "[parameters('collation')]"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "[parameters('webAppName')]",
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2016-03-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('microsoft.insights/components/', parameters('webAppName'))]",
+                "[resourceId('Microsoft.DBforMySQL/servers/', parameters('mySqlServerName'))]"
+            ],
+            "properties": {
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "PHPMYADMIN_EXTENSION_VERSION",
+                            "value": "latest"
+                        },
+                        {
+                            "name": "WEBSITE_DYNAMIC_CACHE",
+                            "value": "0"
+                        },
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[reference(resourceId('microsoft.insights/components/', parameters('webAppName')), '2015-05-01').InstrumentationKey]"
+                        }
+                    ],
+                    "phpVersion": "7.0",
+                    "connectionStrings": [
+                        {
+                            "name": "defaultConnection",
+                            "ConnectionString": "[concat('Database=', parameters('mySqlDatabaseName'), ';Data Source=', parameters('mySqlServerName') ,'.mysql.database.azure.com;User Id=',parameters('mySqlAdministratorLogin'),'@',parameters('mySqlServerName') ,';Password=',parameters('mySqlAdministratorPassword'))]",
+                            "type": "MySQL"
+                        }
+                    ]
+                },
+                "name": "[parameters('webAppName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]"
+            },
+            "resources": [
+                {
+                    "apiVersion": "2016-03-01",
+                    "name": "web",
+                    "type": "sourcecontrols",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', parameters('webAppName'))]"
+                    ],
+                    "properties": {
+                        "RepoUrl": "https://github.com/azureappserviceoss/wordpress-azure",
+                        "branch": "master",
+                        "IsManualIntegration": true
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.TerraformOSS/providerregistrations",
+            "apiVersion": "2018-05-01-preview",
+            "location": "[parameters('tfRPlocation')]",
+            "name": "CloudFlare",
+            "properties": {
+                "providerType": "cloudflare",
+                "settings": {
+                    "email": "[parameters('email')]",
+                    "token": "[parameters('token')]"
+                }
+            }
+        },
+        {
+            "name": "SetupDNSCName",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-02-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.TerraformOSS/providerregistrations', 'CloudFlare')]",
+                "[resourceId('Microsoft.Web/Sites', parameters('webAppName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('nestedTemplateUri')]"
+                },
+                "parameters": {
+                    "resourceName": {
+                        "value": "DNSCName"
+                    },
+                    "location": {
+                        "value": "[parameters('tfRPlocation')]"
+                    },
+                    "providerId": {
+                        "value": "[resourceId('Microsoft.TerraformOSS/providerregistrations','CloudFlare')]"
+                    },
+                    "domain": {
+                        "value": "[parameters('domain')]"
+                    },
+                    "domainnamelabel": {
+                        "value": "[parameters('domainnamelabel')]"
+                    },
+                    "dnsRecordValue": {
+                        "value": "[concat(parameters('webAppName'),'.azurewebsites.net')]"
+                    },
+                    "dnsRecordType": {
+                        "value": "CNAME"
+                    },
+                    "proxied": {
+                        "value": false
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/hostnameBindings",
+            "name": "[concat(parameters('webAppName'), '/', parameters('domainnamelabel'),'.',parameters('domain'))]",
+            "apiVersion": "2016-03-01",
+            "location": "[resourceGroup().location]",
+            "properties": {},
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments/','SetupDNSCName')]"
+            ]
+        },
+        {
+            "name": "UpdateDNSCName",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-02-01",
+            "condition":"[parameters('proxied')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites/hostnameBindings', parameters('webAppName'),concat(parameters('domainnamelabel'),'.',parameters('domain')))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('nestedTemplateUri')]"
+                },
+                "parameters": {
+                    "resourceName": {
+                        "value": "DNSCName"
+                    },
+                    "location": {
+                        "value": "[parameters('tfRPlocation')]"
+                    },
+                    "providerId": {
+                        "value": "[resourceId('Microsoft.TerraformOSS/providerregistrations','CloudFlare')]"
+                    },
+                    "domain": {
+                        "value": "[parameters('domain')]"
+                    },
+                    "domainnamelabel": {
+                        "value": "[parameters('domainnamelabel')]"
+                    },
+                    "dnsRecordValue": {
+                        "value": "[concat(parameters('webAppName'),'.azurewebsites.net')]"
+                    },
+                    "dnsRecordType": {
+                        "value": "CNAME"
+                    },
+                    "proxied": {
+                        "value": "[parameters('proxied')]"
+                    }
+                }
+            }
+        }
+    ]
+}
